@@ -4,8 +4,17 @@
     "composite": false,
     "declaration": false,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["vitest.config.ts", "eslint.config.js"],
-  "references": []
+  "include": [
+    "vitest.config.ts",
+    "eslint.config.js"
+  ],
+  "references": [
+    {
+      "path": "packages/domain"
+    }
+  ]
 }
