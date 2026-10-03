@@ -25,7 +25,7 @@ Visual polish is NOT scored. Plain CSS only.
    - `delivery-api`: projects, breakdown items, allocations, plus a published `capacity-usage` endpoint (hours per employee per month, across ALL projects) that People reads to flag oversubscription.
    - Node + Fastify, data in one JSON file per service via `lowdb` (changed from SQLite on 2026-10-03: simpler to read, and 720 allocations need no database). File lives on a Docker volume, seeded from the fixture on first start. Edits survive reload and restart.
 6. **Transport between remotes: Server-Sent Events.** Each API emits change events (`rates.changed`, `allocations.changed`). Delivery subscribes to People's stream, so a rate edit reaches an open cost view with no reload, even in another tab or in standalone mode.
-7. **Shell pushes context in as props:** `{ currency, activeUser }`. Remotes export a `mount(el, props)` function, not a React component, so hosted and standalone use the same entry.
+7. **Shell pushes context in as props:** `{ currency, activeUser }` (`ShellContext` in contracts). Each remote exposes `./App`, a React component taking exactly those props (changed from `mount(el, props)` on 2026-10-03: simpler, and the shared React singleton makes it safe). Standalone, the remote's own `bootstrap.tsx` renders the same `App` with default props.
 8. **Leaf gets a child (R4): move the leaf's allocations onto the new child.** No silent loss, no blocked action.
 9. **Over-capacity owner (R5):** every allocation has `updatedAt`; the most recently edited one contributing to an over-capacity person-month is the one Delivery names.
 10. **Git: you make every commit yourself** at the end of each step, so the history is real.

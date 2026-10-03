@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist-types",
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "types": []
+  },
+  "include": ["src"],
+  "references": [{ "path": "../../packages/contracts" }, { "path": "../../packages/domain" }]
+}

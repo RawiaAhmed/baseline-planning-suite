@@ -82,3 +82,18 @@ export type DeliveryEvent =
 export interface ApiError {
   readonly message: string;
 }
+
+// ---------- Shell → remotes (props pushed in at runtime) ----------
+
+export type CurrencyCode = 'EUR' | 'USD' | 'GBP';
+
+export interface ActiveUser {
+  readonly id: string;
+  readonly name: string;
+}
+
+/** What the shell owns and pushes into every remote. Each remote's exposed `./App` takes exactly these props. */
+export interface ShellContext {
+  readonly currency: CurrencyCode;
+  readonly activeUser: ActiveUser;
+}

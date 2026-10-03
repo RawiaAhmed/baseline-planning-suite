@@ -24,6 +24,15 @@
     },
     {
       "path": "services/delivery-api"
+    },
+    {
+      "path": "apps/shell"
+    },
+    {
+      "path": "apps/people"
+    },
+    {
+      "path": "apps/delivery"
     }
   ]
 }
