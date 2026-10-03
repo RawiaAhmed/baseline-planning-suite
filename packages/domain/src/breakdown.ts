@@ -1,3 +1,5 @@
+import { groupBy, keyBy } from 'es-toolkit';
+
 /** A node of a project's work breakdown. `parentId` is null at the root. */
 export interface BreakdownNode {
   readonly id: string;
@@ -15,37 +17,51 @@ export interface BreakdownTree<T extends BreakdownNode> {
   depthOf(id: string): number;
   /** All nodes below `id`, not including itself. */
   descendantsOf(id: string): readonly T[];
+  /** Levels from `id` down to its deepest descendant; a leaf is 1. */
+  heightOf(id: string): number;
 }
 
 export function buildTree<T extends BreakdownNode>(nodes: readonly T[]): BreakdownTree<T> {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const children = new Map<string, T[]>();
-  for (const node of nodes) {
-    if (node.parentId === null) continue;
-    const list = children.get(node.parentId) ?? [];
-    list.push(node);
-    children.set(node.parentId, list);
-  }
+  const byId = keyBy(nodes, (node) => node.id);
+  const childrenByParent = groupBy(nodes, (node) => node.parentId ?? '');
 
-  const childrenOf = (id: string): readonly T[] => children.get(id) ?? [];
+  const childrenOf = (id: string): readonly T[] => childrenByParent[id] ?? [];
 
   const depthOf = (id: string): number => {
-    let depth = 0;
-    for (let node = byId.get(id); node; node = node.parentId === null ? undefined : byId.get(node.parentId)) {
-      depth += 1;
-    }
-    return depth;
+    const parentId = byId[id]?.parentId;
+    return parentId ? 1 + depthOf(parentId) : 1;
   };
 
   const descendantsOf = (id: string): T[] => childrenOf(id).flatMap((child) => [child, ...descendantsOf(child.id)]);
 
+  const heightOf = (id: string): number => 1 + Math.max(0, ...childrenOf(id).map((child) => heightOf(child.id)));
+
   return {
-    roots: nodes.filter((n) => n.parentId === null),
+    roots: childrenOf(''),
     childrenOf,
     isLeaf: (id) => childrenOf(id).length === 0,
     depthOf,
     descendantsOf,
+    heightOf,
   };
+}
+
+export type MoveProblem = 'into-itself' | 'too-deep';
+
+/** Why `id` cannot be moved under `newParentId` (null = make it a root), or undefined when it can. */
+export function moveProblem<T extends BreakdownNode>(
+  tree: BreakdownTree<T>,
+  id: string,
+  newParentId: string | null,
+): MoveProblem | undefined {
+  if (newParentId === null) return undefined;
+
+  const ownSubtree = [id, ...tree.descendantsOf(id).map((node) => node.id)];
+  if (ownSubtree.includes(newParentId)) return 'into-itself';
+
+  if (tree.depthOf(newParentId) + tree.heightOf(id) > MAX_DEPTH) return 'too-deep';
+
+  return undefined;
 }
 
 /**

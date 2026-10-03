@@ -23,7 +23,7 @@ Visual polish is NOT scored. Plain CSS only.
 5. **Data layer: two small backend services, one per team.**
    - `people-api`: employees and rate records.
    - `delivery-api`: projects, breakdown items, allocations, plus a published `capacity-usage` endpoint (hours per employee per month, across ALL projects) that People reads to flag oversubscription.
-   - Node + Fastify + SQLite file on a Docker volume, seeded from the fixture on first start. Edits survive reload and restart.
+   - Node + Fastify, data in one JSON file per service via `lowdb` (changed from SQLite on 2026-10-03: simpler to read, and 720 allocations need no database). File lives on a Docker volume, seeded from the fixture on first start. Edits survive reload and restart.
 6. **Transport between remotes: Server-Sent Events.** Each API emits change events (`rates.changed`, `allocations.changed`). Delivery subscribes to People's stream, so a rate edit reaches an open cost view with no reload, even in another tab or in standalone mode.
 7. **Shell pushes context in as props:** `{ currency, activeUser }`. Remotes export a `mount(el, props)` function, not a React component, so hosted and standalone use the same entry.
 8. **Leaf gets a child (R4): move the leaf's allocations onto the new child.** No silent loss, no blocked action.
@@ -60,7 +60,7 @@ Each step ends with: you run it, read the diff, commit.
 | 1 | Workspace scaffold: root `package.json`, TS strict base config, ESLint (`no-explicit-any`), Vitest, `.gitignore`, `git init` | `npm run typecheck` and `npm test` pass on an empty repo | 30 min |
 | 2 | `packages/domain` part 1: working days, rate slicing per month, cost. First test = Figure 4 numbers (22, 8, 14, 176 h, 88 h, €7,880.00, 50.0%, €89.5455) | Reference calculation green in Vitest | 2 h |
 | 3 | `packages/domain` part 2: unit conversion (h / PM / % / €) with round-trip test, largest-remainder rounding, WBS roll-ups, cross-project capacity, "rate missing" marker | All domain tests green, still no React | 2-3 h |
-| 4 | `packages/contracts` + `people-api` + `delivery-api` with SQLite, seed import, REST + SSE | `curl` returns seeded employees; edit a rate, SSE event appears | 3 h |
+| 4 | `packages/contracts` + `people-api` + `delivery-api` with lowdb JSON files, seed import, REST + SSE | `curl` returns seeded employees; edit a rate, SSE event appears | 3 h |
 | 5 | Shell + empty People and Delivery remotes on Module Federation, runtime `config.json`, error boundary with "break a remote" switch | Shell loads both remotes; break toggle shows the failure panel while shell stays alive | 3 h |
 | 6 | People remote: searchable register, rate history add / correct / remove (retroactive allowed), oversubscribed badge | Edit a rate, reload, it persisted | 3 h |
 | 7 | Delivery remote part 1: WBS tree create / rename / move / delete, R4 rule | Tree edits persist; adding a child under an allocated leaf moves its effort | 3 h |

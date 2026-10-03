@@ -1,5 +1,6 @@
+import { sumBy } from 'es-toolkit';
 import type { YearMonth } from './calendar';
-import { rateSlicesOf, type RateRecord, type RateSlice } from './rates';
+import { rateSlicesOf, type RateRecord } from './rates';
 
 export interface MonthCost {
   /** Exact cost, not rounded. */
@@ -12,40 +13,20 @@ export interface MonthCost {
 
 /**
  * Prices `hours` of effort in `month`. Effort is spread evenly over the
- * month's working days, then each slice is priced at its own rate.
+ * month's working days, so the cost is hours × the day-weighted average rate
+ * (unpriced days count as zero).
  */
 export function monthCost(hours: number, month: YearMonth, rates: readonly RateRecord[]): MonthCost {
   const slices = rateSlicesOf(month, rates);
-  const totalDays = slices.reduce((sum, s) => sum + s.workingDays, 0);
-  const hoursPerDay = hours / totalDays;
+  const pricedSlices = slices.filter((slice) => slice.kind === 'priced');
 
-  let cost = 0;
-  let pricedDays = 0;
-  for (const slice of slices) {
-    if (slice.kind === 'priced') {
-      cost += slice.workingDays * hoursPerDay * slice.hourlyCost;
-      pricedDays += slice.workingDays;
-    }
-  }
+  const totalDays = sumBy(slices, (slice) => slice.workingDays);
+  const pricedDays = sumBy(pricedSlices, (slice) => slice.workingDays);
+  const blendedRate = sumBy(pricedSlices, (slice) => slice.workingDays * slice.hourlyCost) / totalDays;
 
   return {
-    cost,
-    blendedRate: blendedRateOf(slices),
+    cost: hours * blendedRate,
+    blendedRate: pricedDays === 0 ? undefined : blendedRate,
     hasUnpricedDays: pricedDays < totalDays,
   };
-}
-
-/**
- * Cost per hour of any allocation in the month. Effort is spread evenly per
- * working day, so this is the day-weighted rate; unpriced days count as zero.
- * Used to turn a cost typed into a cell back into hours.
- */
-function blendedRateOf(slices: readonly RateSlice[]): number | undefined {
-  let weighted = 0;
-  let totalDays = 0;
-  for (const slice of slices) {
-    totalDays += slice.workingDays;
-    if (slice.kind === 'priced') weighted += slice.workingDays * slice.hourlyCost;
-  }
-  return weighted === 0 ? undefined : weighted / totalDays;
 }

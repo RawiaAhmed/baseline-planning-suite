@@ -1,3 +1,4 @@
+import { groupBy, maxBy, sumBy } from 'es-toolkit';
 import type { YearMonth } from './calendar';
 import { personMonthHours, type WeeklyHours } from './units';
 
@@ -36,41 +37,33 @@ export function capacityLoads(
   allocations: readonly CapacityAllocation[],
   weeklyHoursOf: (employeeId: string) => WeeklyHours | undefined,
 ): Map<string, PersonMonthLoad> {
-  const groups = new Map<string, CapacityAllocation[]>();
-  for (const allocation of allocations) {
-    const key = loadKey(allocation.employeeId, allocation.month);
-    const group = groups.get(key) ?? [];
-    group.push(allocation);
-    groups.set(key, group);
-  }
-
   const loads = new Map<string, PersonMonthLoad>();
-  for (const [key, group] of groups) {
-    const [first] = group;
-    if (!first) continue;
-    const weeklyHours = weeklyHoursOf(first.employeeId);
+  const groups = groupBy(allocations, (allocation) => loadKey(allocation.employeeId, allocation.month));
+
+  for (const [key, group] of Object.entries(groups)) {
+    // groupBy never yields an empty group, so the first entry always exists.
+    const [{ employeeId, month }] = group as [CapacityAllocation, ...CapacityAllocation[]];
+    const weeklyHours = weeklyHoursOf(employeeId);
     if (weeklyHours === undefined) continue;
 
-    const capacityHours = personMonthHours(weeklyHours, first.month);
-    const allocatedHours = group.reduce((sum, a) => sum + a.hours, 0);
+    const capacityHours = personMonthHours(weeklyHours, month);
+    const allocatedHours = sumBy(group, (allocation) => allocation.hours);
     const overCapacity = allocatedHours > capacityHours + TOLERANCE_HOURS;
+    const latestEdit = maxBy(
+      group.filter((allocation) => allocation.hours > 0),
+      (allocation) => Date.parse(allocation.updatedAt),
+    );
 
     loads.set(key, {
-      employeeId: first.employeeId,
-      month: first.month,
+      employeeId,
+      month,
       allocatedHours,
       capacityHours,
       percent: (100 * allocatedHours) / capacityHours,
       overCapacity,
-      causedBy: overCapacity ? latestEdited(group.filter((a) => a.hours > 0))?.id : undefined,
+      causedBy: overCapacity ? latestEdit?.id : undefined,
     });
   }
-  return loads;
-}
 
-function latestEdited(group: readonly CapacityAllocation[]): CapacityAllocation | undefined {
-  return group.reduce<CapacityAllocation | undefined>(
-    (latest, a) => (latest === undefined || a.updatedAt > latest.updatedAt ? a : latest),
-    undefined,
-  );
+  return loads;
 }

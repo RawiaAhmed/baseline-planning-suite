@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTree, rollUp } from './index';
+import { buildTree, moveProblem, rollUp } from './index';
 
 const nodes = [
   { id: 'a', parentId: null },
@@ -31,5 +31,21 @@ describe('rollUp', () => {
     expect(totals.get('a1')).toBe(3.5);
     expect(totals.get('a')).toBe(3.75);
     expect(totals.get('b')).toBe(4);
+  });
+});
+
+describe('moveProblem', () => {
+  it('allows moving a leaf under another node within three levels', () => {
+    expect(moveProblem(tree, 'a2', 'b')).toBeUndefined();
+    expect(moveProblem(tree, 'a1x', null)).toBeUndefined();
+  });
+
+  it('refuses moving a node under itself or its own descendant', () => {
+    expect(moveProblem(tree, 'a', 'a1x')).toBe('into-itself');
+  });
+
+  it('refuses a move that would make the tree four levels deep', () => {
+    // a1 has children, so under a2 (level 2) its children would land on level 4
+    expect(moveProblem(tree, 'a1', 'a2')).toBe('too-deep');
   });
 });

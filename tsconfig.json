@@ -15,6 +15,15 @@
   "references": [
     {
       "path": "packages/domain"
+    },
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "services/people-api"
+    },
+    {
+      "path": "services/delivery-api"
     }
   ]
 }

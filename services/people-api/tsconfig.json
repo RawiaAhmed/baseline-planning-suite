@@ -5,7 +5,8 @@
     "outDir": "dist",
     "emitDeclarationOnly": true,
     "lib": ["ES2023"],
-    "types": []
+    "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "../../packages/contracts" }, { "path": "../../packages/domain" }]
 }

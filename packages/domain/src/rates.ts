@@ -1,3 +1,4 @@
+import { sortBy } from 'es-toolkit';
 import { workingDaysOf, type IsoDate, type YearMonth } from './calendar';
 
 /** One effective-dated cost rate. It runs from `validFrom` (inclusive) until the next record starts. */
@@ -13,12 +14,7 @@ export type RateSlice =
 
 /** The rate in force on a given day, or `undefined` before the first record. */
 export function rateOn(day: IsoDate, rates: readonly RateRecord[]): RateRecord | undefined {
-  let current: RateRecord | undefined;
-  for (const rate of sortByValidFrom(rates)) {
-    if (rate.validFrom > day) break;
-    current = rate;
-  }
-  return current;
+  return sortBy(rates, ['validFrom']).findLast((rate) => rate.validFrom <= day);
 }
 
 /**
@@ -27,27 +23,20 @@ export function rateOn(day: IsoDate, rates: readonly RateRecord[]): RateRecord |
  */
 export function rateSlicesOf(month: YearMonth, rates: readonly RateRecord[]): RateSlice[] {
   const slices: RateSlice[] = [];
+
   for (const day of workingDaysOf(month)) {
-    const rate = rateOn(day, rates);
-    const last = slices.at(-1);
-    if (last && sameRate(last, rate)) {
-      slices[slices.length - 1] = { ...last, workingDays: last.workingDays + 1 };
+    const hourlyCost = rateOn(day, rates)?.hourlyCost;
+    const previous = slices.at(-1);
+    const previousCost = previous?.kind === 'priced' ? previous.hourlyCost : undefined;
+
+    if (previous && previousCost === hourlyCost) {
+      slices[slices.length - 1] = { ...previous, workingDays: previous.workingDays + 1 };
+    } else if (hourlyCost === undefined) {
+      slices.push({ kind: 'unpriced', from: day, workingDays: 1 });
     } else {
-      slices.push(
-        rate
-          ? { kind: 'priced', from: day, workingDays: 1, hourlyCost: rate.hourlyCost }
-          : { kind: 'unpriced', from: day, workingDays: 1 },
-      );
+      slices.push({ kind: 'priced', from: day, workingDays: 1, hourlyCost });
     }
   }
+
   return slices;
-}
-
-function sameRate(slice: RateSlice, rate: RateRecord | undefined): boolean {
-  if (!rate) return slice.kind === 'unpriced';
-  return slice.kind === 'priced' && slice.hourlyCost === rate.hourlyCost;
-}
-
-function sortByValidFrom(rates: readonly RateRecord[]): RateRecord[] {
-  return [...rates].sort((a, b) => a.validFrom.localeCompare(b.validFrom));
 }

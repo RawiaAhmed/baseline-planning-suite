@@ -12,5 +12,13 @@ export {
   type WeeklyHours,
 } from './units';
 export { roundTo, roundToTotal } from './rounding';
-export { MAX_DEPTH, buildTree, rollUp, type BreakdownNode, type BreakdownTree } from './breakdown';
+export {
+  MAX_DEPTH,
+  buildTree,
+  moveProblem,
+  rollUp,
+  type BreakdownNode,
+  type BreakdownTree,
+  type MoveProblem,
+} from './breakdown';
 export { capacityLoads, loadKey, type CapacityAllocation, type PersonMonthLoad } from './capacity';
