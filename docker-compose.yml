@@ -1,0 +1,27 @@
+# docker compose up  →  http://localhost:8080
+services:
+  shell:
+    build: { context: ., target: shell }
+    ports: ["8080:8080"]
+    environment:
+      # Change these to point the shell at remotes elsewhere; no rebuild needed.
+      PEOPLE_REMOTE_URL: ${PEOPLE_REMOTE_URL:-http://localhost:8080/remotes/people/mf-manifest.json}
+      DELIVERY_REMOTE_URL: ${DELIVERY_REMOTE_URL:-http://localhost:8080/remotes/delivery/mf-manifest.json}
+
+  people-web:
+    build: { context: ., target: people-web }
+
+  delivery-web:
+    build: { context: ., target: delivery-web }
+
+  people-api:
+    build: { context: ., target: people-api }
+    volumes: ["people-data:/data"]
+
+  delivery-api:
+    build: { context: ., target: delivery-api }
+    volumes: ["delivery-data:/data"]
+
+volumes:
+  people-data:
+  delivery-data:

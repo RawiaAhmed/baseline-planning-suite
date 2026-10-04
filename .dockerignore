@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/dist-types
+**/data
+**/*.tsbuildinfo
+.git
+graphify-out
+docs/case-study.pdf

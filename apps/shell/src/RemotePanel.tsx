@@ -24,8 +24,9 @@ export function RemotePanel({ name, title, context }: Props) {
           <h2>{title} is unavailable</h2>
           <p>The {title} app could not be loaded. The rest of Baseline still works.</p>
           <pre>{error instanceof Error ? error.message : String(error)}</pre>
+          {/* Reloads without any ?break= switch, so a fixed or restarted remote loads again. */}
           <button type="button" onClick={() => window.location.assign(window.location.pathname)}>
-            Reload without the failure switch
+            Try again
           </button>
         </div>
       )}
