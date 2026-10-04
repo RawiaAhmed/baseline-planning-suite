@@ -35,7 +35,7 @@ npm run dev        # both APIs + all three apps, with hot reload
 | :4001, :4002 | people-api, delivery-api |
 
 ```bash
-npm test           # 56 tests, no browser
+npm test           # 59 tests, no browser
 npm run typecheck
 npm run lint
 ```
@@ -168,4 +168,5 @@ All in `packages/domain`, all tested without React.
 |---|---|
 | `packages/domain/src/*.test.ts` | Every calculation rule, including Figure 4 |
 | `apps/delivery/src/features/staffing/staffing.test.ts` | The grid model: all four units, roll-ups, markers, R3, display currency |
+| `apps/people/src/features/register/oversubscription.test.ts` | The Oversubscribed badge: over 100 %, exactly 100 %, each person's own weekly hours |
 | `services/*/src/server.test.ts` | API rules: retroactive rate edits, duplicate start dates, R4 effort move, leaf-only effort, capacity usage |
