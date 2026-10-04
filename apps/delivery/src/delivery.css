@@ -1,0 +1,62 @@
+/* Scoped under .delivery so these styles never leak into the shell or People. */
+.delivery .tree,
+.delivery .tree ul {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.delivery .tree {
+  padding-left: 0;
+}
+
+.delivery .node {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.delivery .node-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.delivery .node-name {
+  min-width: 180px;
+}
+
+.delivery .name-form {
+  display: inline-flex;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.delivery .hint {
+  color: #666;
+}
+
+.delivery .error {
+  color: #a00;
+}
+
+.delivery .info {
+  color: #06622b;
+}
+
+.delivery button,
+.delivery select {
+  cursor: pointer;
+}
+
+.delivery button:disabled {
+  cursor: not-allowed;
+}
+
+/* Keep action results visible while scrolling a long tree. */
+.delivery .breakdown [role='status'],
+.delivery .breakdown [role='alert'] {
+  position: sticky;
+  top: 0;
+  padding: 6px 0;
+  background: #fff;
+}

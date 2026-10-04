@@ -1,6 +1,12 @@
+:root {
+  color-scheme: light;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
+  background: #fff;
+  color: #111;
 }
 
 .shell-header {
