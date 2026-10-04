@@ -24,11 +24,6 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
-const send = (method: string, body?: unknown): RequestInit => ({
-  method,
-  ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-});
-
 export interface NewItem {
   readonly projectId: string;
   readonly parentId: string | null;
@@ -44,12 +39,12 @@ export const api = {
   // Delivery's own data
   projects: () => request<Project[]>(`${DELIVERY_API}/projects`),
   breakdownItems: (projectId: string) => request<BreakdownItem[]>(`${DELIVERY_API}/breakdown-items?projectId=${projectId}`),
-  createItem: (item: NewItem) => request<BreakdownItem>(`${DELIVERY_API}/breakdown-items`, send('POST', item)),
-  updateItem: (id: string, change: ItemChange) => request<BreakdownItem>(`${DELIVERY_API}/breakdown-items/${id}`, send('PATCH', change)),
-  deleteItem: (id: string) => request<undefined>(`${DELIVERY_API}/breakdown-items/${id}`, send('DELETE')),
+  createItem: (item: NewItem) => request<BreakdownItem>(`${DELIVERY_API}/breakdown-items`, { method: 'POST', body: JSON.stringify(item) }),
+  updateItem: (id: string, change: ItemChange) => request<BreakdownItem>(`${DELIVERY_API}/breakdown-items/${id}`, { method: 'PATCH', body: JSON.stringify(change) }),
+  deleteItem: (id: string) => request<undefined>(`${DELIVERY_API}/breakdown-items/${id}`, { method: 'DELETE' }),
   /** Every project's allocations: capacity is only meaningful across all of them. */
   allocations: () => request<Allocation[]>(`${DELIVERY_API}/allocations`),
-  setAllocation: (input: AllocationInput) => request<Allocation>(`${DELIVERY_API}/allocations`, send('PUT', input)),
+  setAllocation: (input: AllocationInput) => request<Allocation>(`${DELIVERY_API}/allocations`, { method: 'PUT', body: JSON.stringify(input) }),
 
   // People's published data
   employees: () => request<Employee[]>(`${PEOPLE_API}/employees`),

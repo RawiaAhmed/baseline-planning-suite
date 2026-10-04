@@ -41,7 +41,7 @@ export function Register({ employees, oversubscribed, onOpen }: Props) {
           {matches.map((employee) => {
             const overMonths = oversubscribed.get(employee.id);
             return (
-              <tr key={employee.id} onClick={() => onOpen(employee.id)}>
+              <tr key={employee.id}>
                 <td>
                   <button type="button" className="link" onClick={() => onOpen(employee.id)}>
                     {employee.name}
