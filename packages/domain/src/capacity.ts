@@ -29,6 +29,11 @@ const TOLERANCE_HOURS = 1e-6;
 
 export const loadKey = (employeeId: string, month: YearMonth): string => `${employeeId}|${month}`;
 
+/** True when `allocatedHours` in `month` exceed one person-month for this contract. */
+export function isOverCapacity(allocatedHours: number, weeklyHours: WeeklyHours, month: YearMonth): boolean {
+  return allocatedHours > personMonthHours(weeklyHours, month) + TOLERANCE_HOURS;
+}
+
 /**
  * Load per person per month, summed across every project.
  * Pass all allocations, not only those of the open project.
@@ -48,7 +53,7 @@ export function capacityLoads(
 
     const capacityHours = personMonthHours(weeklyHours, month);
     const allocatedHours = sumBy(group, (allocation) => allocation.hours);
-    const overCapacity = allocatedHours > capacityHours + TOLERANCE_HOURS;
+    const overCapacity = isOverCapacity(allocatedHours, weeklyHours, month);
     const latestEdit = maxBy(
       group.filter((allocation) => allocation.hours > 0),
       (allocation) => Date.parse(allocation.updatedAt),

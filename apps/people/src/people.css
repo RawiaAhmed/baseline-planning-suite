@@ -1,0 +1,55 @@
+/* Scoped under .people so these styles never leak into the shell or Delivery. */
+.people table {
+  border-collapse: collapse;
+  margin: 8px 0 16px;
+}
+
+.people th,
+.people td {
+  padding: 4px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.people .register tbody tr:hover {
+  background: #f6f8fa;
+  cursor: pointer;
+}
+
+.people .link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #0645ad;
+  text-decoration: underline;
+}
+
+.people .badge-over {
+  color: #a00;
+  font-weight: bold;
+}
+
+.people .hint {
+  color: #666;
+}
+
+.people [role='alert'] {
+  color: #a00;
+}
+
+.people .rate-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.people button,
+.people select,
+.people input[type='date'] {
+  cursor: pointer;
+}
+
+.people button:disabled {
+  cursor: not-allowed;
+}

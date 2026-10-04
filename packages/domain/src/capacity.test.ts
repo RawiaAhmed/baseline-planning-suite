@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capacityLoads, loadKey, yearMonth, type CapacityAllocation, type WeeklyHours } from './index';
+import { capacityLoads, isOverCapacity, loadKey, yearMonth, type CapacityAllocation, type WeeklyHours } from './index';
 
 const march = yearMonth('2026-03'); // 22 working days → 176 h at 40 h/week
 const weeklyHours = (id: string): WeeklyHours | undefined => (id === 'emp-001' ? 40 : undefined);
@@ -34,5 +34,13 @@ describe('capacityLoads', () => {
     const loads = capacityLoads([alloc('a', 88, 't1'), alloc('b', 88, 't2')], weeklyHours);
     const load = loads.get(loadKey('emp-001', march));
     expect(load).toMatchObject({ percent: 100, overCapacity: false, causedBy: undefined });
+  });
+});
+
+describe('isOverCapacity', () => {
+  it('compares against that month’s person-month for the contract', () => {
+    expect(isOverCapacity(176, 40, march)).toBe(false);
+    expect(isOverCapacity(176.01, 40, march)).toBe(true);
+    expect(isOverCapacity(100, 20, march)).toBe(true); // 20 h/week → 88 h in March
   });
 });

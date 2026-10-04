@@ -21,4 +21,4 @@ export {
   type BreakdownTree,
   type MoveProblem,
 } from './breakdown';
-export { capacityLoads, loadKey, type CapacityAllocation, type PersonMonthLoad } from './capacity';
+export { capacityLoads, isOverCapacity, loadKey, type CapacityAllocation, type PersonMonthLoad } from './capacity';
