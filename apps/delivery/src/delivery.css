@@ -60,3 +60,82 @@
   padding: 6px 0;
   background: #fff;
 }
+
+.delivery .toolbar {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.delivery [role='tab'][aria-selected='true'],
+.delivery .unit-switch [aria-pressed='true'] {
+  font-weight: bold;
+  background: #dde7f5;
+}
+
+.delivery .unit-switch {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.delivery .grid-scroll {
+  overflow-x: auto;
+}
+
+.delivery .grid {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.delivery .grid th,
+.delivery .grid td {
+  padding: 2px 6px;
+  border-bottom: 1px solid #eee;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.delivery .grid tbody th {
+  text-align: left;
+  font-weight: normal;
+}
+
+.delivery .grid .item-row {
+  background: #f6f8fa;
+}
+
+.delivery .grid .item-row th,
+.delivery .grid .item-row td {
+  font-weight: bold;
+}
+
+.delivery .grid .derived {
+  font-size: 0.75em;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.delivery .grid .cell {
+  width: 72px;
+  text-align: right;
+  font: inherit;
+}
+
+.delivery .grid td.over {
+  background: #fde8e8;
+}
+
+.delivery .grid td.unpriced {
+  background: #fff6db;
+}
+
+.delivery .grid .add-person {
+  margin-left: 8px;
+  font-weight: normal;
+}
+
+.delivery .grid .total {
+  font-weight: bold;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fromHours, isoDate, personMonthHours, toHours, yearMonth, type CellContext, type DisplayUnit } from './index';
+import { fromHours, isoDate, monthsBetween, personMonthHours, toHours, yearMonth, type CellContext, type DisplayUnit } from './index';
 
 const cell: CellContext = {
   month: yearMonth('2026-03'),
@@ -36,5 +36,14 @@ describe('toHours', () => {
     const unpriced: CellContext = { ...cell, month: yearMonth('2024-06') };
     expect(toHours(100, 'cost', unpriced)).toEqual({ ok: false, reason: 'no-rate' });
     expect(toHours(0, 'cost', unpriced)).toEqual({ ok: true, hours: 0 });
+  });
+});
+
+describe('monthsBetween', () => {
+  it('lists every month of a project, inclusive', () => {
+    const months = monthsBetween(isoDate('2026-03-01'), isoDate('2027-02-28'));
+    expect(months).toHaveLength(12);
+    expect(months[0]).toBe('2026-03');
+    expect(months.at(-1)).toBe('2027-02');
   });
 });

@@ -1,10 +1,18 @@
-import type { ActiveUser, CurrencyCode, ShellContext } from '@baseline/contracts';
+import type { ActiveUser, DisplayCurrency, ShellContext } from '@baseline/contracts';
 import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router';
 import { RemotePanel } from './RemotePanel';
 import type { RemoteName } from './remotes';
 
-const CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP'];
+/**
+ * Display currencies. Rates are recorded in EUR; these fixed conversion
+ * factors are illustrative, a real build would read them from a rates service.
+ */
+const CURRENCIES = [
+  { code: 'EUR', perEuro: 1 },
+  { code: 'USD', perEuro: 1.08 },
+  { code: 'GBP', perEuro: 0.85 },
+] as const satisfies readonly DisplayCurrency[];
 
 /** Demo users; there is no authentication in scope. */
 const USERS = [
@@ -19,7 +27,7 @@ const PAGES: { name: RemoteName; title: string }[] = [
 
 /** Owns navigation, display currency and the active user, and pushes the last two into the remotes. */
 export function Shell() {
-  const [currency, setCurrency] = useState<CurrencyCode>('EUR');
+  const [currency, setCurrency] = useState<DisplayCurrency>(CURRENCIES[0]);
   const [activeUser, setActiveUser] = useState<ActiveUser>(USERS[0]);
   const context: ShellContext = { currency, activeUser };
   const { search } = useLocation();
@@ -38,8 +46,11 @@ export function Shell() {
 
         <label>
           Currency{' '}
-          <select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}>
-            {CURRENCIES.map((code) => (
+          <select
+            value={currency.code}
+            onChange={(event) => setCurrency(CURRENCIES.find((c) => c.code === event.target.value) ?? currency)}
+          >
+            {CURRENCIES.map(({ code }) => (
               <option key={code}>{code}</option>
             ))}
           </select>

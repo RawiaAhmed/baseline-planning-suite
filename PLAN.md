@@ -96,3 +96,12 @@ Main build uses the simple version. Extras are done only after steps 1-11 are co
 | Small plain CSS file per app | Nicer styling, shared visual tokens |
 | Tests on `packages/domain` + one API smoke test | Component tests, more API tests |
 | Grid renders all 12 months plainly | Virtualised / sticky-header grid |
+
+## Decisions to defend in the README (collected while building)
+
+- **R1 extension:** if the first rate starts mid-month, days before it cost zero and the cell is marked `*`.
+- **R3 scope:** largest-remainder rounding runs per row (cells add up to the row total). Columns (parent = sum of children's displayed cells) can differ by 0.01; doing both directions at once is a controlled-rounding problem, out of scope. Side effect: one exact value can display as 2767.56 in one month and 2767.57 in another within the same row.
+- **R5:** the `†` marks only the latest-edited allocation causing an over-capacity person-month; capacity counts all projects.
+- **Display currency:** rates are recorded in EUR; the shell pushes `{ code, perEuro }` from a fixed illustrative table. Typing a cost in USD converts back to EUR, then to hours.
+- **Seed import:** allocation `amount` is person-months; Delivery converts to hours once at first start using the fixture's weekly hours.
+- **Grid rows:** a person row stays visible after its last hours are cleared (until reload), so clearing a cell never makes the row jump away.

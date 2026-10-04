@@ -1,8 +1,10 @@
 import type { ShellContext } from '@baseline/contracts';
+import { isoDate, monthsBetween } from '@baseline/domain';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, keys } from './api';
 import { BreakdownTree } from './BreakdownTree';
+import { StaffingGrid } from './StaffingGrid';
 import { useLiveUpdates } from './useLiveUpdates';
 import './delivery.css';
 
@@ -17,43 +19,76 @@ export default function App(context: ShellContext) {
   );
 }
 
-function Delivery({ activeUser }: ShellContext) {
-  useLiveUpdates();
-  const projects = useQuery({ queryKey: keys.projects, queryFn: api.projects });
-  const [chosenProjectId, setChosenProjectId] = useState<string | null>(null);
-  const projectId = chosenProjectId ?? projects.data?.[0]?.id;
+type View = 'staffing' | 'breakdown';
 
+function Delivery({ activeUser, currency }: ShellContext) {
+  useLiveUpdates();
+  const [view, setView] = useState<View>('staffing');
+  const [chosenProjectId, setChosenProjectId] = useState<string | null>(null);
+
+  const projects = useQuery({ queryKey: keys.projects, queryFn: api.projects });
+  const project = projects.data?.find((p) => p.id === chosenProjectId) ?? projects.data?.[0];
   const items = useQuery({
-    queryKey: keys.breakdownItems(projectId ?? ''),
-    queryFn: () => api.breakdownItems(projectId ?? ''),
-    enabled: projectId !== undefined,
+    queryKey: keys.breakdownItems(project?.id ?? ''),
+    queryFn: () => api.breakdownItems(project?.id ?? ''),
+    enabled: project !== undefined,
   });
   const allocations = useQuery({ queryKey: keys.allocations, queryFn: api.allocations });
+  // Rates and people belong to People; Delivery only reads its published API.
+  const employees = useQuery({ queryKey: keys.employees, queryFn: api.employees });
+  const rates = useQuery({ queryKey: keys.rates, queryFn: api.rates });
 
   if (projects.isPending) return <p>Loading projects…</p>;
-  if (projects.isError) return <p role="alert">Could not load projects: {projects.error.message}</p>;
+  if (projects.isError || !project) return <p role="alert">Could not load projects: {projects.error?.message}</p>;
 
-  const itemsWithEffort = new Set((allocations.data ?? []).map((allocation) => allocation.breakdownItemId));
+  const failed = [items, allocations, employees, rates].find((query) => query.isError);
+  const ready = items.data && allocations.data && employees.data && rates.data;
 
   return (
     <div className="delivery">
       <h1>Delivery</h1>
       <p className="hint">Signed in as {activeUser.name}</p>
 
-      <label>
-        Project{' '}
-        <select value={projectId} onChange={(event) => setChosenProjectId(event.target.value)}>
-          {projects.data.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name} ({project.startDate} to {project.endDate})
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="toolbar">
+        <label>
+          Project{' '}
+          <select value={project.id} onChange={(event) => setChosenProjectId(event.target.value)}>
+            {projects.data.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.startDate} to {p.endDate})
+              </option>
+            ))}
+          </select>
+        </label>
+        <div role="tablist">
+          <button type="button" role="tab" aria-selected={view === 'staffing'} onClick={() => setView('staffing')}>
+            Staffing grid
+          </button>
+          <button type="button" role="tab" aria-selected={view === 'breakdown'} onClick={() => setView('breakdown')}>
+            Work breakdown
+          </button>
+        </div>
+      </div>
 
-      {items.isError && <p role="alert">Could not load the breakdown: {items.error.message}</p>}
-      {items.data && projectId && (
-        <BreakdownTree projectId={projectId} items={items.data} itemsWithEffort={itemsWithEffort} />
+      {failed && <p role="alert">Could not load data: {failed.error?.message}</p>}
+      {!ready && !failed && <p>Loading…</p>}
+
+      {ready && view === 'staffing' && (
+        <StaffingGrid
+          items={items.data}
+          allocations={allocations.data}
+          employees={employees.data}
+          rates={rates.data}
+          months={monthsBetween(isoDate(project.startDate), isoDate(project.endDate))}
+          currency={currency}
+        />
+      )}
+      {ready && view === 'breakdown' && (
+        <BreakdownTree
+          projectId={project.id}
+          items={items.data}
+          itemsWithEffort={new Set(allocations.data.map((allocation) => allocation.breakdownItemId))}
+        />
       )}
     </div>
   );

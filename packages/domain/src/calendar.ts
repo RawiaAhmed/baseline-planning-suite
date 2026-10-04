@@ -1,4 +1,4 @@
-import { eachDayOfInterval, endOfMonth, isWeekend, parseISO } from 'date-fns';
+import { eachDayOfInterval, eachMonthOfInterval, endOfMonth, format, isWeekend, parseISO } from 'date-fns';
 
 /** Calendar date, `YYYY-MM-DD`. */
 export type IsoDate = string & { readonly __brand: 'IsoDate' };
@@ -30,9 +30,13 @@ export function workingDaysOf(month: YearMonth): IsoDate[] {
     .map((day) => toIsoDate(day));
 }
 
+/** Every month from the one containing `start` to the one containing `end`, inclusive. */
+export function monthsBetween(start: IsoDate, end: IsoDate): YearMonth[] {
+  return eachMonthOfInterval({ start: parseISO(start), end: parseISO(end) }).map(
+    (month) => format(month, 'yyyy-MM') as YearMonth,
+  );
+}
+
 function toIsoDate(day: Date): IsoDate {
-  const y = day.getFullYear();
-  const m = String(day.getMonth() + 1).padStart(2, '0');
-  const d = String(day.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}` as IsoDate;
+  return format(day, 'yyyy-MM-dd') as IsoDate;
 }

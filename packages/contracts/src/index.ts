@@ -92,8 +92,15 @@ export interface ActiveUser {
   readonly name: string;
 }
 
+/** All rates are recorded in EUR; the shell decides how costs are displayed. */
+export interface DisplayCurrency {
+  readonly code: CurrencyCode;
+  /** Units of this currency per 1 EUR. */
+  readonly perEuro: number;
+}
+
 /** What the shell owns and pushes into every remote. Each remote's exposed `./App` takes exactly these props. */
 export interface ShellContext {
-  readonly currency: CurrencyCode;
+  readonly currency: DisplayCurrency;
   readonly activeUser: ActiveUser;
 }
