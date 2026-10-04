@@ -3,7 +3,7 @@ import { DECIMALS, isoDate, toHours, type DisplayUnit, type YearMonth } from '@b
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { useState } from 'react';
-import { api, keys } from './api';
+import { api, keys } from '../../api/client';
 import { buildGrid, type GridCell, type GridRow } from './staffing';
 
 const UNITS: { unit: DisplayUnit; label: string }[] = [

@@ -1,8 +1,8 @@
 import type { ActiveUser, DisplayCurrency, ShellContext } from '@baseline/contracts';
 import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router';
-import { RemotePanel } from './RemotePanel';
-import type { RemoteName } from './remotes';
+import { RemotePanel } from './remotes/RemotePanel';
+import type { RemoteName } from './remotes/loadRemote';
 
 /**
  * Display currencies. Rates are recorded in EUR; these fixed conversion

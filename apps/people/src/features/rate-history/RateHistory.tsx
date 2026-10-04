@@ -2,7 +2,7 @@ import type { Employee, RateInput, RateRecord } from '@baseline/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sortBy } from 'es-toolkit';
 import { useState } from 'react';
-import { api, keys } from './api';
+import { api, keys } from '../../api/client';
 
 interface Props {
   readonly employee: Employee;

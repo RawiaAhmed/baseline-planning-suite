@@ -3,7 +3,7 @@ import type { BreakdownItem, DeliveryEvent } from '@baseline/contracts';
 import { MAX_DEPTH, buildTree, moveProblem } from '@baseline/domain';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { DeliveryStore } from './store';
+import type { DeliveryStore } from '../store';
 
 const createInput = z.object({
   projectId: z.string().min(1),

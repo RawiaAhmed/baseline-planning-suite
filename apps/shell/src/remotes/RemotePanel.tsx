@@ -1,7 +1,7 @@
 import type { ShellContext } from '@baseline/contracts';
 import { lazy, Suspense, useMemo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { loadRemoteApp, type RemoteName } from './remotes';
+import { loadRemoteApp, type RemoteName } from './loadRemote';
 
 interface Props {
   readonly name: RemoteName;

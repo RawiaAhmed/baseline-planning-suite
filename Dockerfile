@@ -18,12 +18,12 @@ COPY . .
 # ---------- APIs (run TypeScript directly with tsx) ----------
 FROM deps AS people-api
 WORKDIR /repo/services/people-api
-ENV PEOPLE_API_PORT=4001 DATA_FILE=/data/people.json SEED_FILE=/repo/docs/baseline-seed.json
+ENV PEOPLE_API_PORT=4001 DATA_FILE=/data/people.json SEED_FILE=/repo/fixtures/baseline-seed.json
 CMD ["npm", "start"]
 
 FROM deps AS delivery-api
 WORKDIR /repo/services/delivery-api
-ENV DELIVERY_API_PORT=4002 DATA_FILE=/data/delivery.json SEED_FILE=/repo/docs/baseline-seed.json
+ENV DELIVERY_API_PORT=4002 DATA_FILE=/data/delivery.json SEED_FILE=/repo/fixtures/baseline-seed.json
 CMD ["npm", "start"]
 
 # ---------- front-end builds ----------

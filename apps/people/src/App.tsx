@@ -1,11 +1,11 @@
 import type { ShellContext } from '@baseline/contracts';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, keys } from './api';
-import { oversubscribedMonths } from './oversubscription';
-import { RateHistory } from './RateHistory';
-import { Register } from './Register';
-import { useLiveUpdates } from './useLiveUpdates';
+import { api, keys } from './api/client';
+import { oversubscribedMonths } from './features/register/oversubscription';
+import { RateHistory } from './features/rate-history/RateHistory';
+import { Register } from './features/register/Register';
+import { useLiveUpdates } from './api/useLiveUpdates';
 import './people.css';
 
 const queryClient = new QueryClient();

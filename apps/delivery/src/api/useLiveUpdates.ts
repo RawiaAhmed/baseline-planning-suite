@@ -1,10 +1,11 @@
+import type { DeliveryEvent } from '@baseline/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { keys } from './api';
+import { keys } from './client';
 
 /**
- * Refreshes data when either API reports a change, so edits made in another
- * tab, or in Delivery, show up here without a reload.
+ * Refreshes data when either API reports a change. A rate edited in People
+ * reaches the cost view here without a reload.
  */
 export function useLiveUpdates(): void {
   const queryClient = useQueryClient();
@@ -14,7 +15,11 @@ export function useLiveUpdates(): void {
     const deliveryEvents = new EventSource('/api/delivery/events');
 
     peopleEvents.onmessage = () => queryClient.invalidateQueries({ queryKey: keys.rates });
-    deliveryEvents.onmessage = () => queryClient.invalidateQueries({ queryKey: keys.capacityUsage });
+    deliveryEvents.onmessage = (message: MessageEvent<string>) => {
+      const event = JSON.parse(message.data) as DeliveryEvent;
+      const queryKey = event.type === 'breakdown.changed' ? keys.allBreakdownItems : keys.allocations;
+      void queryClient.invalidateQueries({ queryKey });
+    };
 
     return () => {
       peopleEvents.close();

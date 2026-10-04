@@ -4,7 +4,7 @@ import { buildTree } from '@baseline/domain';
 import { groupBy, sumBy } from 'es-toolkit';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { DeliveryStore } from './store';
+import type { DeliveryStore } from '../store';
 
 const allocationInput = z.object({
   breakdownItemId: z.string().min(1),

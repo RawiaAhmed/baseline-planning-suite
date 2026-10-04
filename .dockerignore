@@ -5,4 +5,4 @@
 **/*.tsbuildinfo
 .git
 graphify-out
-docs/case-study.pdf
+case-study.pdf

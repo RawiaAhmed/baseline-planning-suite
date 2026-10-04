@@ -2,7 +2,7 @@ import type { BreakdownItem } from '@baseline/contracts';
 import { buildTree, MAX_DEPTH, moveProblem, type BreakdownTree as Tree } from '@baseline/domain';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, keys, type ItemChange, type NewItem } from './api';
+import { api, keys, type ItemChange, type NewItem } from '../../api/client';
 
 interface Props {
   readonly projectId: string;

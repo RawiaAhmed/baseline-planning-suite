@@ -2,10 +2,10 @@ import type { ShellContext } from '@baseline/contracts';
 import { isoDate, monthsBetween } from '@baseline/domain';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, keys } from './api';
-import { BreakdownTree } from './BreakdownTree';
-import { StaffingGrid } from './StaffingGrid';
-import { useLiveUpdates } from './useLiveUpdates';
+import { api, keys } from './api/client';
+import { BreakdownTree } from './features/breakdown/BreakdownTree';
+import { StaffingGrid } from './features/staffing/StaffingGrid';
+import { useLiveUpdates } from './api/useLiveUpdates';
 import './delivery.css';
 
 const queryClient = new QueryClient();

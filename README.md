@@ -16,7 +16,7 @@ React 19, TypeScript strict (no `any`), Module Federation 2 on Rsbuild, no UI li
 docker compose up --build
 ```
 
-Open **http://localhost:8080**. No Node needed on the host. The first build takes about two minutes. Data is seeded from `docs/baseline-seed.json` on first start and kept on Docker volumes, so edits survive reloads and restarts. `docker compose down -v` resets to the seed.
+Open **http://localhost:8080**. No Node needed on the host. The first build takes about two minutes. Data is seeded from `fixtures/baseline-seed.json` on first start and kept on Docker volumes, so edits survive reloads and restarts. `docker compose down -v` resets to the seed.
 
 **The reference calculation:** Delivery → Ledger Consolidation → *Design* → Adaeze Okafor, March 2026. Switch units: **0.50** PM, **88.00** h, **50.0** %, **7,880.00** cost. Typing `7880` in Cost stores 88 h.
 
@@ -54,19 +54,30 @@ A remote that crashes while rendering is caught the same way: each remote sits i
 
 ```
 apps/
-  shell/       host: routes, currency + user, runtime remote loading, failure panel
-  people/      remote: register, rate history, oversubscription badge
-  delivery/    remote: breakdown tree, staffing grid
-               staffing.ts builds the whole grid as plain data (tested without React)
+  shell/src/
+    Shell.tsx              routes, display currency, active user
+    remotes/               runtime remote loading + the failure panel
+  people/src/
+    App.tsx                exposed as people/App (hosted and standalone)
+    api/                   REST client + live updates (SSE)
+    features/register/     searchable register, oversubscription badge
+    features/rate-history/ add, correct, remove rates
+  delivery/src/
+    App.tsx                exposed as delivery/App (hosted and standalone)
+    api/                   REST client + live updates (SSE)
+    features/breakdown/    work breakdown tree
+    features/staffing/     staffing grid; staffing.ts builds it as plain data (tested without React)
 services/
-  people-api/    employees + rate records          (owned by the People team)
-  delivery-api/  projects, breakdown, allocations  (owned by the Delivery team)
+  people-api/src/          employees + rate records          (owned by the People team)
+  delivery-api/src/routes/ projects, breakdown, allocations  (owned by the Delivery team)
 packages/
   domain/      pure TypeScript calculation rules; every rule in the brief is tested here
   contracts/   the published contract: API payloads, events, shell props. Types only.
 docker/        nginx configs + start-up script that writes the shell's config.json
-docs/          seed fixture
+fixtures/      the seed file shipped with the brief
 ```
+
+Every app has the same layout: `api/` talks to services, `features/` holds one folder per screen, and `App.tsx` is the only file a host loads.
 
 The two teams never import each other's app or service code. What they share is `contracts` (a published contract) and `domain` (pure functions with no state).
 
@@ -126,7 +137,7 @@ All in `packages/domain`, all tested without React.
 | **R4** derived parents | `breakdown.ts`, delivery-api | Parents are always the sum of children. Adding a child under a leaf that holds effort **moves** that effort onto the new child, and the UI says so. Moving an item *under* a leaf that holds effort is refused with a message. |
 | **R5** cross-project capacity | `capacity.ts` | Summed across every project. Over capacity is flagged, never blocked: People shows *Oversubscribed*, Delivery puts `†` on the most recently edited allocation that caused it. Exactly 100 % is within capacity. |
 
-`reference-calculation.test.ts` checks the five Figure 4 numbers; `apps/delivery/src/staffing.test.ts` checks them again through the whole grid.
+`reference-calculation.test.ts` checks the five Figure 4 numbers; `apps/delivery/src/features/staffing/staffing.test.ts` checks them again through the whole grid.
 
 ## Trade-offs and known limits
 
@@ -140,5 +151,5 @@ All in `packages/domain`, all tested without React.
 | Where | What |
 |---|---|
 | `packages/domain/src/*.test.ts` | Every calculation rule, including Figure 4 |
-| `apps/delivery/src/staffing.test.ts` | The grid model: all four units, roll-ups, markers, R3, display currency |
+| `apps/delivery/src/features/staffing/staffing.test.ts` | The grid model: all four units, roll-ups, markers, R3, display currency |
 | `services/*/src/server.test.ts` | API rules: retroactive rate edits, duplicate start dates, R4 effort move, leaf-only effort, capacity usage |

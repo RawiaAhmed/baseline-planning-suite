@@ -2,8 +2,8 @@ import cors from '@fastify/cors';
 import type { DeliveryEvent } from '@baseline/contracts';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { allocationRoutes } from './allocation-routes';
-import { breakdownRoutes } from './breakdown-routes';
+import { allocationRoutes } from './routes/allocations';
+import { breakdownRoutes } from './routes/breakdown';
 import { registerEvents } from './events';
 import type { DeliveryStore } from './store';
 

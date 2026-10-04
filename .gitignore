@@ -4,7 +4,7 @@ dist/
 *.sqlite
 .env
 .DS_Store
-docs/case-study.pdf
+case-study.pdf
 graphify-out/
 data/
 dist-types/
