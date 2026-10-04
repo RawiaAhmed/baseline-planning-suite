@@ -2,7 +2,7 @@ import type { BreakdownItem } from '@baseline/contracts';
 import { buildTree, MAX_DEPTH, moveProblem, type BreakdownTree as Tree } from '@baseline/domain';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, keys, type ItemChange, type NewItem } from '../../api/client';
+import { api, keys, type ItemChange } from '../../api/client';
 
 interface Props {
   readonly projectId: string;
@@ -17,32 +17,42 @@ export function BreakdownTree({ projectId, items, itemsWithEffort }: Props) {
   const [message, setMessage] = useState<{ kind: 'info' | 'error'; text: string } | null>(null);
   const queryClient = useQueryClient();
 
-  const afterChange = (successText?: string) => ({
-    onSuccess: async () => {
-      setMessage(successText ? { kind: 'info', text: successText } : null);
-      await queryClient.invalidateQueries({ queryKey: keys.allBreakdownItems });
-      await queryClient.invalidateQueries({ queryKey: keys.allocations });
-    },
-    onError: (failure: Error) => setMessage({ kind: 'error', text: failure.message }),
-  });
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: keys.allBreakdownItems });
+    await queryClient.invalidateQueries({ queryKey: keys.allocations });
+  };
+  const showError = (failure: Error) => setMessage({ kind: 'error', text: failure.message });
 
-  // Callbacks are passed per call, so adding a child can report the R4 effort move.
-  const create = useMutation({ mutationFn: api.createItem });
+  const create = useMutation({
+    mutationFn: api.createItem,
+    onSuccess: async (_created, newItem) => {
+      // R4: the server moved the parent's effort onto this new child, so say so.
+      const parent = items.find((item) => item.id === newItem.parentId);
+      const movedEffort = parent !== undefined && itemsWithEffort.has(parent.id);
+      setMessage(movedEffort ? { kind: 'info', text: `The effort on "${parent.name}" moved to its new child "${newItem.name}".` } : null);
+      await refresh();
+    },
+    onError: showError,
+  });
   const update = useMutation({
     mutationFn: ({ id, change }: { id: string; change: ItemChange }) => api.updateItem(id, change),
-    ...afterChange(),
+    onSuccess: async () => {
+      setMessage(null);
+      await refresh();
+    },
+    onError: showError,
   });
-  const remove = useMutation({ mutationFn: api.deleteItem, ...afterChange() });
-
-  const addChild = (parent: BreakdownItem, name: string) => {
-    const movesEffort = itemsWithEffort.has(parent.id);
-    const notice = movesEffort ? `The effort on "${parent.name}" moved to its new child "${name}".` : undefined;
-    const item: NewItem = { projectId, parentId: parent.id, name };
-    create.mutate(item, afterChange(notice));
-  };
+  const remove = useMutation({
+    mutationFn: api.deleteItem,
+    onSuccess: async () => {
+      setMessage(null);
+      await refresh();
+    },
+    onError: showError,
+  });
 
   const actions: NodeActions = {
-    addChild,
+    addChild: (parent, name) => create.mutate({ projectId, parentId: parent.id, name }),
     rename: (item, name) => update.mutate({ id: item.id, change: { name } }),
     move: (item, parentId) => update.mutate({ id: item.id, change: { parentId } }),
     remove: (item) => {
@@ -67,7 +77,7 @@ export function BreakdownTree({ projectId, items, itemsWithEffort }: Props) {
         ))}
       </ul>
 
-      <NameForm label="Add top-level item" onSubmit={(name) => create.mutate({ projectId, parentId: null, name }, afterChange())} />
+      <NameForm label="Add top-level item" onSubmit={(name) => create.mutate({ projectId, parentId: null, name })} />
     </section>
   );
 }

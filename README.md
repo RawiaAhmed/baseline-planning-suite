@@ -79,6 +79,22 @@ fixtures/      the seed file shipped with the brief
 
 Every app has the same layout: `api/` talks to services, `features/` holds one folder per screen, and `App.tsx` is the only file a host loads.
 
+### Where to change what
+
+| To change... | Open |
+|---|---|
+| Working days, months | `packages/domain/src/calendar.ts` |
+| Which rate applies on a day, rate slices | `packages/domain/src/rates.ts` |
+| Monthly cost, blended rate | `packages/domain/src/cost.ts` |
+| Unit conversions, display decimals | `packages/domain/src/units.ts` |
+| Rounding that keeps totals equal | `packages/domain/src/rounding.ts` |
+| Tree rules (depth, moves, roll-ups) | `packages/domain/src/breakdown.ts` |
+| Over-capacity rule | `packages/domain/src/capacity.ts` |
+| What the grid shows in each row and cell | `apps/delivery/src/features/staffing/staffing.ts` |
+| How the grid looks and edits | `apps/delivery/src/features/staffing/StaffingGrid.tsx` |
+| Currencies, users, navigation | `apps/shell/src/Shell.tsx` |
+| API routes and validation | `services/*/src/server.ts`, `services/delivery-api/src/routes/` |
+
 The two teams never import each other's app or service code. What they share is `contracts` (a published contract) and `domain` (pure functions with no state).
 
 ## Architecture

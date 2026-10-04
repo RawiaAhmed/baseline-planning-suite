@@ -38,7 +38,7 @@ export interface GridInput {
 
 export interface GridCell {
   readonly month: YearMonth;
-  /** Rounded for display; the row's cells add up to its total exactly (R3). */
+  /** Exact while the grid is built; rounded for display at the end, so a row's cells add up to its total (R3). */
   readonly value: number;
   /** Some working days fall before the person's first rate, so they cost zero (R1). */
   readonly unpriced: boolean;
@@ -66,13 +66,6 @@ export type GridRow =
       readonly total: number;
     };
 
-/** Exact (unrounded) values of one row, before display rounding. */
-interface ExactRow {
-  readonly values: readonly number[];
-  readonly unpriced: readonly boolean[];
-  readonly overCapacity: readonly (PersonMonthLoad | undefined)[];
-}
-
 export function buildGrid(input: GridInput): GridRow[] {
   const { items, months, unit } = input;
   const tree = buildTree(items);
@@ -84,86 +77,78 @@ export function buildGrid(input: GridInput): GridRow[] {
     (employeeId) => employeesById[employeeId]?.weeklyHours,
   );
 
-  /** One person on one leaf, every month of the grid. */
-  const personRow = (leafId: string, employee: Employee): ExactRow => {
-    const allocations = (allocationsByItem[leafId] ?? []).filter((a) => a.employeeId === employee.id);
-    const cells = months.map((month) => {
-      const allocation = allocations.find((a) => a.month === month);
-      const hours = allocation?.hours ?? 0;
-      const context: CellContext = {
-        month,
-        weeklyHours: employee.weeklyHours,
-        rates: (ratesByEmployee[employee.id] ?? []).map((rate) => ({ ...rate, validFrom: isoDate(rate.validFrom) })),
-      };
-      const load = loads.get(loadKey(employee.id, month));
-      return {
-        value: fromHours(hours, unit, context) * (unit === 'cost' ? input.perEuro : 1),
-        unpriced: hours > 0 && monthCost(hours, month, context.rates).hasUnpricedDays,
-        overCapacity: allocation && load?.causedBy === allocation.id ? load : undefined,
-      };
-    });
+  /** One person on one leaf in one month. */
+  const exactCell = (leafId: string, employee: Employee, month: YearMonth): GridCell => {
+    const allocation = allocationsByItem[leafId]?.find((a) => a.employeeId === employee.id && a.month === month);
+    const hours = allocation?.hours ?? 0;
+    const context: CellContext = {
+      month,
+      weeklyHours: employee.weeklyHours,
+      rates: (ratesByEmployee[employee.id] ?? []).map((rate) => ({ ...rate, validFrom: isoDate(rate.validFrom) })),
+    };
+    const load = loads.get(loadKey(employee.id, month));
     return {
-      values: cells.map((cell) => cell.value),
-      unpriced: cells.map((cell) => cell.unpriced),
-      overCapacity: cells.map((cell) => cell.overCapacity),
+      month,
+      value: fromHours(hours, unit, context) * (unit === 'cost' ? input.perEuro : 1),
+      unpriced: hours > 0 && monthCost(hours, month, context.rates).hasUnpricedDays,
+      overCapacity: allocation && load?.causedBy === allocation.id ? load : undefined,
     };
   };
 
+  /** People with effort on the leaf, plus anyone added in the UI, sorted by name. */
   const peopleOn = (leafId: string): Employee[] => {
     const withEffort = (allocationsByItem[leafId] ?? []).map((a) => a.employeeId);
     const ids = [...new Set([...withEffort, ...(input.addedPeople?.get(leafId) ?? [])])];
     return ids.flatMap((id) => employeesById[id] ?? []).sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  /** Rows for `item` and everything under it, plus the item's exact values so its parent can sum them (R4). */
-  const visit = (item: BreakdownItem): { rows: GridRow[]; exact: ExactRow } => {
+  /** Rows for an item and everything under it. Also returns the item's exact cells, so its parent can add them up (R4). */
+  const rowsFor = (item: BreakdownItem): { rows: GridRow[]; exact: GridCell[] } => {
     const depth = tree.depthOf(item.id);
     const isLeaf = tree.isLeaf(item.id);
-    let childRows: GridRow[];
-    let childExacts: ExactRow[];
+    const childRows: GridRow[] = [];
+    const childExacts: GridCell[][] = [];
 
     if (isLeaf) {
-      const people = peopleOn(item.id).map((employee) => ({ employee, exact: personRow(item.id, employee) }));
-      childRows = people.map(({ employee, exact }) => ({
-        kind: 'person',
-        key: `${item.id}|${employee.id}`,
-        item,
-        employee,
-        depth: depth + 1,
-        ...rounded(exact, months, unit),
-      }));
-      childExacts = people.map((person) => person.exact);
+      for (const employee of peopleOn(item.id)) {
+        const exact = months.map((month) => exactCell(item.id, employee, month));
+        const key = `${item.id}|${employee.id}`;
+        childRows.push({ kind: 'person', key, item, employee, depth: depth + 1, ...rounded(exact, unit) });
+        childExacts.push(exact);
+      }
     } else {
-      const children = tree.childrenOf(item.id).map(visit);
-      childRows = children.flatMap((child) => child.rows);
-      childExacts = children.map((child) => child.exact);
+      for (const child of tree.childrenOf(item.id)) {
+        const result = rowsFor(child);
+        childRows.push(...result.rows);
+        childExacts.push(result.exact);
+      }
     }
 
-    const exact = sumRows(childExacts, months.length);
-    const itemRow: GridRow = { kind: 'item', key: item.id, item, depth, isLeaf, ...rounded(exact, months, unit) };
+    const exact = sumCells(childExacts, months);
+    const itemRow: GridRow = { kind: 'item', key: item.id, item, depth, isLeaf, ...rounded(exact, unit) };
     return { rows: [itemRow, ...childRows], exact };
   };
 
-  return tree.roots.flatMap((root) => visit(root).rows);
+  return tree.roots.flatMap((root) => rowsFor(root).rows);
 }
 
-/** Derived rows are the sum of their children; markers are not carried up. */
-function sumRows(children: readonly ExactRow[], monthCount: number): ExactRow {
-  const values = Array.from({ length: monthCount }, (_, index) => sum(children.map((child) => child.values[index] ?? 0)));
-  return { values, unpriced: values.map(() => false), overCapacity: values.map(() => undefined) };
+/** A derived row is the month-by-month sum of its children. Markers stay on the person rows. */
+function sumCells(children: readonly GridCell[][], months: readonly YearMonth[]): GridCell[] {
+  return months.map((month, index) => ({
+    month,
+    value: sum(children.map((cells) => cells[index]?.value ?? 0)),
+    unpriced: false,
+    overCapacity: undefined,
+  }));
 }
 
 /** Rounds a row for display so its cells add up to its rounded total (R3). */
-function rounded(exact: ExactRow, months: readonly YearMonth[], unit: DisplayUnit): { cells: GridCell[]; total: number } {
+function rounded(exact: readonly GridCell[], unit: DisplayUnit): { cells: GridCell[]; total: number } {
   const decimals = DECIMALS[unit];
-  const values = roundToTotal(exact.values, decimals);
+  const exactValues = exact.map((cell) => cell.value);
+  const roundedValues = roundToTotal(exactValues, decimals);
   return {
-    total: roundTo(sum(exact.values), decimals),
-    cells: months.map((month, index) => ({
-      month,
-      value: values[index] ?? 0,
-      unpriced: exact.unpriced[index] ?? false,
-      overCapacity: exact.overCapacity[index],
-    })),
+    total: roundTo(sum(exactValues), decimals),
+    cells: exact.map((cell, index) => ({ ...cell, value: roundedValues[index] ?? 0 })),
   };
 }
